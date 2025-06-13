@@ -4,3 +4,4 @@ openai
 dotenv
 selenium
 undetected_chromedriver
+google-generativeai

@@ -24,11 +24,11 @@ import sys
 import json
 import openai
 from dotenv import load_dotenv
+import google.generativeai as genai
 
 INPUT_DIR = "./raw/"
 OUTPUT_DIR = "./processed/"
 PROMPT_DIR = "./prompt/"
-
 
 def load_prompt(prompt_file: str = "prompt.txt") -> str:
     """
@@ -52,12 +52,19 @@ def transform_with_llm(content: str, prompt: str) -> str:
         {"role": "user", "content": f"{content}"}
     ]
     response = openai.chat.completions.create(
-        model="gpt-4.1-mini",
+        model="gpt-4.1",
         messages=messages,
         temperature=0
     )
-    return response.choices[0].message.content.strip()
 
+    return response.choices[0].message.content.strip()
+    '''
+    model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
+    chat = model.start_chat()
+    response = chat.send_message(f"{prompt}\n\n{content}")
+    return response.text.strip()
+    '''
+    
 def run_all_py_files(folder_path):
     py_files = sorted(glob.glob(os.path.join(folder_path, "*.py")))
     for py_file in py_files:
@@ -92,6 +99,7 @@ def main():
     load_dotenv()
     # Load API key
     openai.api_key = os.getenv("OPENAI_API_KEY")
+    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
     if not openai.api_key:
         raise ValueError("Please set the OPENAI_API_KEY environment variable.")
 
@@ -108,14 +116,18 @@ def main():
         print(f"No valid JSON files found in {INPUT_DIR}.")
         return
 
-    print(f"Found JSON files. Processing...")
+    #reward_header = "card_id,category,cashback_pct,point_mul"
+    #print(f"Found JSON files. Processing...")
     #with open(reward_output_path, "w", encoding="utf-8") as out_f:
+    #    out_f.write(reward_header + "\n")
     #    transformed = transform_with_llm(combined_json, reward_prompt)
     #    out_f.write(transformed + "\n")
 
     #print(f"Combined output written to {reward_output_path}")
 
+    info_header = "card_id,card_name,card_type,bank_id,img_url,annual_fee,perks"
     with open(info_output_path, "w", encoding="utf-8") as out_f:
+        out_f.write(info_header + "\n")
         transformed = transform_with_llm(combined_json, info_prompt)
         out_f.write(transformed + "\n")
 
